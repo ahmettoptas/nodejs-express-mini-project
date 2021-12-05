@@ -10,6 +10,7 @@ const { users } = require("./users");
 app.use(express.json());
 const logPath = "./logs.txt";
 
+//morgan module keep log records for every request.
 app.use(
   morgan("common", { stream: fs.createWriteStream(logPath, { flags: "a" }) })
 );
@@ -24,6 +25,7 @@ app.get("/about", (req, res) => {
   <p>Simple about paragraph...</p>`);
 });
 
+//to get all logs
 app.get("/logs", (req, res) => {
   readFile(logPath, "utf8", (err, data) => {
     if (err) res.status(400).send({ message: "error" });
@@ -34,16 +36,21 @@ app.get("/logs", (req, res) => {
   });
 });
 
+//get admin data
 app.get("/admin", getAdmin);
 
+//create admin
+app.post("/sign", sign);
+//login as admin
 app.post("/login", verify);
 
-app.post("/sign", sign);
 
+//to get users from db
 app.get("/users", auth, (req, res) => {
   res.json(users);
 });
 
+//to add user to db
 app.post("/users", auth, (req, res) => {
   const { name, surName, id } = req.body;
   if (name && surName && id) {
@@ -52,6 +59,7 @@ app.post("/users", auth, (req, res) => {
   } else res.status(400).json({ message: "Please fill all fields" });
 });
 
+//edit user's all fields
 app.put("/users/:id", auth, (req, res) => {
   const { name, surName, id } = req.body;
   const id_param = req.params.id;
@@ -65,11 +73,12 @@ app.put("/users/:id", auth, (req, res) => {
       users[index] = { name, surName, id };
       res.status(200).json(users[index]);
     } else {
-      res.json({ message: "User is not found!" });
+      res.status(401).json({ message: "User is not found!" });
     }
-  } else res.json({ message: "Please fill all fields" });
+  } else res.status(400).json({ message: "Please fill all fields" });
 });
 
+//edit user's specified field(s)
 app.patch("/users/:id", auth, (req, res) => {
   const { name, surName, id } = req.body;
   const id_param = req.params.id;
@@ -87,11 +96,14 @@ app.patch("/users/:id", auth, (req, res) => {
   } else res.status(400).json({ message: "Please define some fields!" });
 });
 
+//delete user
 app.delete("/users/:id", auth, (req, res) => {
+  const id_param = req.params.id;
   var user = users.find((ele) => ele.id == Number(id_param));
   if (!user) return res.status(400).json({ message: "User is not found!" });
 
-  users = users.filter((user_ele) => user_ele !== user);
+  const index = users.indexOf(user);
+  users.splice(index,1);
   res.status(200).json({ message: "User is deleted", user });
 });
 

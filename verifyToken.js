@@ -1,16 +1,19 @@
 const jwt = require("jsonwebtoken");
-var signed = false;
-var logged = false;
-var admin = null;
+var signed = false;     //to check admin is signed up
+var logged = false;     //to check admin is logged
+var admin = null;       //to get admin data
 
+
+//middleware to get admin data
 function getAdmin(req, res) {
-  if (admin) res.status(200).json(admin);
+  if (admin) res.status(200).json({message: "There is admin in DB!",admin});
   else res.status(404).json({ message: "There is no admin in DB!" });
 }
 
+//middleware to make admin is logged in
 function verify(req, res) {
-  console.log(req.headers["auth"], "\n", req.body.password);
-  jwt.verify(req.headers["auth"], req.body.password, (err, authData) => {
+  console.log(req.body.token, "\n", req.body.password);
+  jwt.verify(req.body.token, req.body.password, (err, authData) => {
     if (err) {
       res.status(403).json({ message: "Login is not verified" });
     } else {
@@ -23,6 +26,7 @@ function verify(req, res) {
   });
 }
 
+//middleware to make admin is signed up
 function sign(req, res) {
   req.user = req.body.user;
   req.password = req.body.password;
@@ -39,6 +43,7 @@ function sign(req, res) {
   });
 }
 
+//middleware to make authentication for database operations
 function auth(req, res, next) {
   if (logged) next();
   else if (signed) {
